@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel da Oficina</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e1824;--panel:#152333;--card:#1c3047;--line:#243a52;--text:#eef3f8;--muted:#8fa3b8;
+--ok:#3ecf8e;--warn:#f5b73b;--late:#ff5d5d;--run:#4aa3ff}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',system-ui,sans-serif;display:flex;flex-direction:column;padding:2.2vh 2.2vw;gap:2vh;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:5vh}
+.sub{color:var(--muted);font-size:2vh;margin-top:.3vh}
+.clock{text-align:right}
+.clock b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:6vh;line-height:1;font-variant-numeric:tabular-nums}
+.clock span{color:var(--muted);font-size:2vh}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+.stat{background:var(--panel);border-radius:.8vh;padding:1.2vh 1.2vw;border-left:.6vh solid var(--c,var(--line));display:flex;align-items:baseline;gap:.9vw}
+.stat b{font-family:'Barlow Condensed',sans-serif;font-size:5.6vh;font-weight:700;line-height:1;color:var(--c,var(--text))}
+.stat span{color:var(--muted);font-size:2.1vh;line-height:1.1}
+.board{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:1.2vw}
+.col{background:var(--panel);border-radius:.8vh;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.col-h{display:flex;justify-content:space-between;align-items:center;padding:1.4vh 1.1vw;border-bottom:1px solid var(--line)}
+.name{font-family:'Barlow Condensed',sans-serif;font-size:4.8vh;font-weight:700;line-height:1}
+.pill{font-weight:600;font-size:2vh;color:#0e1824;background:var(--c);padding:.5vh .9vw;border-radius:5vh}
+.col-b{flex:1;min-height:0;padding:1.2vh .9vw;display:flex;flex-direction:column;gap:1vh;overflow:hidden}
+.sec{color:var(--muted);font-size:1.9vh;margin-top:.6vh}
+.job{background:var(--card);border-left:.8vh solid var(--c);border-radius:.6vh;padding:1.1vh .9vw;display:flex;flex-direction:column;gap:.8vh}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6vw}
+.plates{display:flex;flex-wrap:wrap;gap:.5vh .4vw}
+.pl{font-style:normal;background:#f1f4f8;color:#0e1824;border-top:.5vh solid #1d4fa3;border-radius:.4vh;padding:.1vh .55vw;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:2.7vh;letter-spacing:.08em}
+.tag{font-weight:600;font-size:1.9vh;color:#0e1824;background:var(--c);padding:.4vh .7vw;border-radius:5vh;white-space:nowrap}
+.svc{font-size:2.4vh;line-height:1.2;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.info{display:flex;gap:1.6vw;color:var(--muted);font-size:2vh;align-items:baseline}
+.info b{font-family:'Barlow Condensed',sans-serif;font-size:3.6vh;color:var(--text);font-variant-numeric:tabular-nums;font-weight:600}
+.info .pv b{color:var(--c)}
+.com{color:var(--muted);font-size:1.9vh}
+.nx{display:grid;grid-template-columns:5.2vw 1fr;gap:.6vw;align-items:center;padding:.7vh 0;border-top:1px solid var(--line)}
+.nx b{font-family:'Barlow Condensed',sans-serif;font-size:3.4vh;font-weight:600;font-variant-numeric:tabular-nums}
+.nx div{min-width:0}
+.nx span{display:block;font-size:2.1vh;font-weight:600;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx em{display:block;font-style:normal;color:var(--muted);font-size:1.9vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx.wait b{color:var(--late)}
+.dn{color:var(--muted);font-size:1.9vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.livre{margin:auto;text-align:center;color:var(--muted);font-size:2.4vh}
+.livre b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:6vh;color:var(--ok)}
+.run{--c:var(--run)}.warn{--c:var(--warn)}.wait,.late{--c:var(--late)}.ok{--c:var(--ok)}
+.late .tag,.wait .tag{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.late .tag,.wait .tag{animation:none}}
+footer{display:flex;justify-content:space-between;color:var(--muted);font-size:1.8vh}
+#erro{color:var(--warn)}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>OFICINA INTERNA</h1><div class="sub">Serviços de hoje por mecânico</div></div>
+  <div class="clock"><b id="hora">--:--</b><span id="data"></span></div>
+</header>
+<section class="stats">
+  <div class="stat" style="--c:var(--run)"><b id="sRun">0</b><span>em<br>execução</span></div>
+  <div class="stat"><b id="sNext">0</b><span>agendados</span></div>
+  <div class="stat" style="--c:var(--late)"><b id="sLate">0</b><span>atrasados</span></div>
+  <div class="stat" style="--c:var(--ok)"><b id="sDone">0</b><span>concluídos<br>hoje</span></div>
+  <div class="stat" style="--c:var(--ok)"><b id="sFree">0</b><span>mecânicos<br>livres</span></div>
+</section>
+<main class="board" id="board"></main>
+<footer><span id="atual">Carregando…</span><span id="erro"></span></footer>
+
+<script>
+/* ============ CONFIGURAÇÃO ============ */
+const SHEET_ID = "1Nmxk27c2xF6DkPuEAn1KQclr1CaxIHowH5nznNxSCxk"; // ID da planilha Google Sheets
+const SHEET_NAME = ""; // Opcional: nome da aba; deixe vazio para usar a primeira aba
+const MECANICOS = ["Donizete","Josnei","Joelmo","Camacho"]; // Colunas que sempre aparecem
+const ATUALIZAR_A_CADA = 30;  // segundos
+const AVISO_MINUTOS = 30;     // "Saindo em breve" quando faltar esse tempo para a previsão
+const ATRASO_INICIO_MIN = 0; // Marca atraso assim que passar do horário agendado sem hora de início
+/* ======================================= */
+
+const norm=s=>(s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const pad=n=>String(n).padStart(2,"0");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=d=>d?pad(d.getHours())+":"+pad(d.getMinutes()):"--:--";
+const dur=m=>{m=Math.round(m);return m>=60?Math.floor(m/60)+"h"+pad(m%60):m+" min"};
+const MESES={jan:0,fev:1,feb:1,mar:2,abr:3,apr:3,mai:4,may:4,jun:5,jul:6,ago:7,aug:7,set:8,sep:8,out:9,oct:9,nov:10,dez:11,dec:11};
+let todos=null;
+
+function parseCSV(t){
+  const out=[];let row=[],cur="",q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'&&t[i+1]==='"'){cur+='"';i++}else if(c==='"')q=false;else cur+=c}
+    else if(c==='"')q=true;
+    else if(c===','||c===';'){row.push(cur);cur=""}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(cur);cur="";out.push(row);row=[]}
+    else cur+=c}
+  if(cur||row.length){row.push(cur);out.push(row)}
+  return out.filter(r=>r.some(x=>x.trim()));
+}
+function parseData(v){
+  v=(v||"").trim();let m;const ano=new Date().getFullYear();
+  if(m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1])}
+  if(m=v.match(/^(\d{4})-(\d{2})-(\d{2})/))return new Date(+m[1],+m[2]-1,+m[3]);
+  if(m=v.match(/^(\d{1,2})[-\/ ]([a-zA-Zç]{3})/)){const k=MESES[norm(m[2])];if(k!==undefined)return new Date(ano,k,+m[1])}
+  if(m=v.match(/^(\d{1,2})\/(\d{1,2})$/))return new Date(ano,+m[2]-1,+m[1]);
+  return null;
+}
+function parseHora(v,base){
+  v=(v||"").trim();if(!v)return null;let m;
+  if(m=v.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})[ T]+(\d{1,2}):(\d{2})/)){const d=parseData(m[1]);if(d){d.setHours(+m[2],+m[3]);return d}}
+  if(m=v.match(/^(\d{1,2})[:h](\d{2})/)){const d=new Date(base);d.setHours(+m[1],+m[2],0,0);return d}
+  return null;
+}
+function nomes(s){
+  return (s||"").split(/\/|,|;|\se\s/i).map(x=>x.trim()).filter(Boolean).map(n=>{
+    const k=MECANICOS.find(m=>norm(m)===norm(n));
+    return k||n.charAt(0).toUpperCase()+n.slice(1).toLowerCase()});
+}
+function montar(csv){
+  const L=parseCSV(csv);if(!L.length)return[];
+  const cab=L[0].map(h=>norm(h).replace(/\s+/g," "));
+  const f=n=>cab.findIndex(h=>h.includes(n));
+  const c={dia:f("dia"),placa:f("placa"),serv:f("servico"),mec:f("mecanico"),ag:f("agendado"),ini:f("inicio"),
+    prev:f("previsao"),fim:cab.findIndex(h=>h.includes("conclusao")&&!h.includes("previsao")),st:f("status")};
+  return L.slice(1).map(r=>{
+    const dia=parseData(r[c.dia]);if(!dia)return null;
+    const ag=(r[c.ag]||"").trim();
+    const j={dia,placas:(r[c.placa]||"").split(/\s+/).filter(Boolean),serv:(r[c.serv]||"").trim(),mecs:nomes(r[c.mec]),
+      encaixe:norm(ag)==="encaixe",ag:parseHora(ag,dia),ini:parseHora(r[c.ini],dia),prev:parseHora(r[c.prev],dia),
+      fim:parseHora(r[c.fim],dia),st:norm(r[c.st])};
+    if(j.prev&&j.ini&&j.prev<j.ini)j.prev=null;
+    if(!j.mecs.length)j.mecs=["Sem responsável"];
+    return (j.placas.length||j.serv)?j:null;
+  }).filter(Boolean);
+}
+function estado(j,agora){
+  if(j.st.includes("cancel"))return{k:"cancel",txt:"Cancelado"};
+  if(j.st.includes("conclu")||j.fim)return{k:"done",txt:"Concluído"};
+  if(j.ini){
+    if(j.prev){const m=(j.prev-agora)/60000;
+      if(m<0)return{k:"late",txt:"Atrasado "+dur(-m)};
+      if(m<=AVISO_MINUTOS)return{k:"warn",txt:"Saindo em breve"}}
+    return{k:"run",txt:"Em execução"};
+  }
+  if(j.ag&&(agora-j.ag)/60000>ATRASO_INICIO_MIN)return{k:"wait",txt:"Início atrasado"};
+  return{k:"next",txt:"Agendado"};
+}
+const plates=j=>j.placas.map(p=>`<i class="pl">${esc(p)}</i>`).join("");
+const mesmoDia=(a,b)=>a.toDateString()===b.toDateString();
+
+function desenhar(){
+  const agora=new Date(),hoje=new Date(agora.getFullYear(),agora.getMonth(),agora.getDate());
+  const jobs=(todos||[]).filter(j=>mesmoDia(j.dia,hoje)||(j.dia<hoje&&j.ini&&!j.fim&&!/conclu|cancel/.test(j.st)))
+    .map(j=>({...j,s:estado(j,agora)}));
+  const lista=[...MECANICOS];
+  jobs.forEach(j=>j.mecs.forEach(m=>{if(!lista.includes(m))lista.push(m)}));
+  const ativo=j=>["run","warn","late"].includes(j.s.k);
+  const prox=j=>["next","wait"].includes(j.s.k);
+  const t=d=>d?d.getTime():9e12;
+  let livres=0;
+  board.style.setProperty("--n",lista.length);
+  board.innerHTML=lista.map(nome=>{
+    const meus=jobs.filter(j=>j.mecs.includes(nome));
+    const at=meus.filter(ativo).sort((a,b)=>t(a.ini)-t(b.ini));
+    const nx=meus.filter(prox).sort((a,b)=>t(a.ag)-t(b.ag));
+    const dn=meus.filter(j=>j.s.k==="done"||j.s.k==="cancel").sort((a,b)=>t(b.fim)-t(a.fim));
+    const livre=!at.length;if(livre&&MECANICOS.includes(nome))livres++;
+    const com=j=>{const o=j.mecs.filter(m=>m!==nome);return o.length?`<div class="com">Com ${esc(o.join(", "))}</div>`:""};
+    let h=`<div class="col"><div class="col-h"><div class="name">${esc(nome)}</div>
+      <span class="pill ${livre?"ok":"run"}">${livre?"Livre":"Em serviço"}</span></div><div class="col-b">`;
+    h+=at.slice(0,2).map(j=>`<div class="job ${j.s.k}"><div class="top"><div class="plates">${plates(j)}</div><span class="tag">${j.s.txt}</span></div>
+      <div class="svc">${esc(j.serv)}</div>
+      <div class="info"><span>Início <b>${fmt(j.ini)}</b></span>${j.prev?`<span class="pv">Previsão <b>${fmt(j.prev)}</b></span>`:""}</div>${com(j)}</div>`).join("");
+    if(at.length>2)h+=`<div class="sec">+ ${at.length-2} em execução</div>`;
+    if(nx.length){h+=`<div class="sec">Próximos</div>`;
+      h+=nx.slice(0,at.length?3:5).map(j=>`<div class="nx ${j.s.k}"><b>${j.encaixe?"Encaixe":fmt(j.ag)}</b><div><span>${esc(j.placas.join(" "))}</span><em>${esc(j.serv)}</em></div></div>`).join("");
+      if(nx.length>(at.length?3:5))h+=`<div class="sec">+ ${nx.length-(at.length?3:5)} agendados</div>`}
+    if(livre&&!nx.length)h+=`<div class="livre"><b>Livre</b>Sem serviços pendentes</div>`;
+    if(dn.length){h+=`<div class="sec" style="margin-top:auto">Concluídos hoje (${dn.length})</div>`;
+      h+=dn.slice(0,2).map(j=>`<div class="dn">✓ ${esc(j.placas[0]||"")} – ${esc(j.serv)}</div>`).join("")}
+    return h+`</div></div>`;
+  }).join("");
+  const n=k=>jobs.filter(j=>k.includes(j.s.k)).length;
+  sRun.textContent=n(["run","warn","late"]);sNext.textContent=n(["next","wait"]);
+  sLate.textContent=n(["late","wait"]);sDone.textContent=n(["done"]);sFree.textContent=livres;
+}
+function demo(){
+  const d=new Date(),dd=`${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  const t=m=>{if(m===null)return"";const x=new Date(d.getTime()+m*60000);return pad(x.getHours())+":"+pad(x.getMinutes())};
+  const R=[["Donizete","SEY3D869 BDQ4E18","TROCA DE 4 PNEUS, CALIBRAGEM E MAPEAMENTO",-130,-120,40,null],
+    ["Josnei","BAK8038","CHECK-LIST COMPLETO + REVISÃO",-200,-190,-20,null],
+    ["Joelmo","SEE0I15","TROCA DE VÁLVULA DE DRENO E REPARO DO PARALAMA",-100,-90,20,null],
+    ["Joelmo","TAW8B90","VERIFICAR VAZAMENTO DE AR",60,null,null,null],
+    ["Camacho","RYD5E09","INSTALAR APARABARRO",-300,-295,-250,-245],
+    ["Donizete","UBT6J64 BDV9E61","CALIBRAGEM COMPLETA",120,null,null,null],
+    ["Josnei/Camacho","SED7D05 RYG6B41","TROCA DE PNEUS DE TRAÇÃO",30,null,null,null],
+    ["Donizete","SER3G75","VERIFICAÇÃO DE PNEUS",-400,-390,-340,-330]];
+  return "Dia da semana,Placa,Serviço a ser executado,Mecânico responsável,Horário agendado,Hora início,Previsão de  conclusão,Hora de conclusão,Status,OS\n"+
+    R.map(r=>[dd,r[1],r[2],r[0],t(r[3]),t(r[4]),t(r[5]),t(r[6]),"",""].map(x=>`"${x}"`).join(",")).join("\n");
+}
+function celulaTexto(c){
+  if(!c)return "";
+  if(c.f!==undefined&&c.f!==null)return String(c.f);
+  const v=c.v;
+  if(v===null||v===undefined)return "";
+  // O Google Visualization pode devolver datas como Date(AAAA,MM,DD).
+  if(typeof v==="string"){
+    const m=v.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,.*)?\)$/);
+    if(m)return pad(+m[3])+"/"+pad(+m[2]+1)+"/"+m[1];
+  }
+  return String(v);
+}
+function csvEsc(v){
+  const s=String(v??"");
+  return '"'+s.replace(/"/g,'""')+'"';
+}
+function respostaParaCSV(resp){
+  if(!resp||resp.status!=="ok"||!resp.table) {
+    const msg=resp&&resp.errors&&resp.errors[0]&&resp.errors[0].detailed_message;
+    throw new Error(msg||"O Google Sheets não retornou uma tabela válida.");
+  }
+  const cols=resp.table.cols||[];
+  const rows=[cols.map(c=>c.label||c.id||"")];
+  (resp.table.rows||[]).forEach(r=>{
+    rows.push((r.c||[]).map(c=>celulaTexto(c)));
+  });
+  return rows.map(r=>r.map(csvEsc).join(",")).join("\n");
+}
+function carregarPlanilhaJSONP(){
+  return new Promise((resolve,reject)=>{
+    const callback="__oficinaSheets_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+    const script=document.createElement("script");
+    let finalizado=false;
+    const limpar=()=>{
+      if(finalizado)return;
+      finalizado=true;
+      clearTimeout(timeout);
+      delete window[callback];
+      script.remove();
+    };
+    const timeout=setTimeout(()=>{
+      limpar();
+      reject(new Error("Tempo esgotado ao consultar a planilha. Confira o compartilhamento e a conexão."));
+    },15000);
+    window[callback]=resp=>{
+      try{limpar();resolve(respostaParaCSV(resp));}
+      catch(e){reject(e);}
+    };
+    script.onerror=()=>{
+      limpar();
+      reject(new Error("Não foi possível acessar a planilha. Confira se ela está disponível para leitura."));
+    };
+    const params=new URLSearchParams();
+    params.set("tqx","out:json;responseHandler:"+callback);
+    params.set("headers","1");
+    params.set("t",String(Date.now()));
+    if(SHEET_NAME)params.set("sheet",SHEET_NAME);
+    script.src="https://docs.google.com/spreadsheets/d/"+encodeURIComponent(SHEET_ID)+"/gviz/tq?"+params.toString();
+    document.head.appendChild(script);
+  });
+}
+async function carregar(){
+  try{
+    const txt=SHEET_ID?await carregarPlanilhaJSONP():demo();
+    const dados=montar(txt);
+    if(!dados.length)throw new Error("A planilha foi acessada, mas nenhuma linha válida foi encontrada. Confira os cabeçalhos e as datas.");
+    todos=dados;
+    erro.textContent=SHEET_ID?"":"Modo demonstração: configure SHEET_ID com o ID da planilha.";
+    atual.textContent="Atualizado às "+fmt(new Date());
+    desenhar();
+  }catch(e){
+    console.error("Erro ao carregar a planilha:",e);
+    erro.textContent="Falha ao atualizar: "+(e.message||"verifique o acesso à planilha");
+    atual.textContent=todos?"Mantendo os últimos dados carregados":"Aguardando acesso à planilha";
+  }
+}
+function relogio(){const d=new Date();hora.textContent=fmt(d);
+  data.textContent=d.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});if(todos)desenhar()}
+relogio();setInterval(relogio,60000);carregar();setInterval(carregar,ATUALIZAR_A_CADA*1000);
+</script>
+</body>
+</html>
